@@ -1,0 +1,23 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "that-me",
+	"compatibility_date": "2026-02-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "that-me-db",
+			"database_id": "LOCAL_PLACEHOLDER",
+			"migrations_dir": "migrations"
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "CACHE",
+			"id": "LOCAL_PLACEHOLDER"
+		}
+	],
+	"vars": {
+		"AUTH_PROVIDER": "dummy"
+	}
+}
