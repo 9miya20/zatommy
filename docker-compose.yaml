@@ -1,0 +1,13 @@
+services:
+  that-me:
+    build:
+      context: ./apps/that-me
+    ports:
+      - "38101:38101"
+    volumes:
+      - ./apps/that-me/src:/app/src
+      - ./apps/that-me/static:/app/static
+      - ./apps/that-me/migrations:/app/migrations
+      - ./apps/that-me/.wrangler/state:/app/.wrangler/state
+    environment:
+      - AUTH_PROVIDER=dummy
