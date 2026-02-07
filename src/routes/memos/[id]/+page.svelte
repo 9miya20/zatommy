@@ -93,7 +93,7 @@
 
 <style>
 	.page {
-		max-width: 800px;
+		max-width: 1200px;
 		margin: 0 auto;
 		padding: 1.5rem;
 		min-height: 100vh;

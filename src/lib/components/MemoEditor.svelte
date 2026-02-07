@@ -13,7 +13,6 @@
 		onContentChange: (value: string) => void;
 	} = $props();
 
-	let showPreview = $state(false);
 	let renderedHtml = $derived(marked.parse(content) as string);
 </script>
 
@@ -26,27 +25,23 @@
 		placeholder="タイトル"
 	/>
 
-	<div class="tabs">
-		<button class="tab" class:active={!showPreview} onclick={() => (showPreview = false)}>
-			編集
-		</button>
-		<button class="tab" class:active={showPreview} onclick={() => (showPreview = true)}>
-			プレビュー
-		</button>
-	</div>
-
-	{#if showPreview}
-		<div class="preview markdown-body">
-			{@html renderedHtml}
+	<div class="panes">
+		<div class="pane edit-pane">
+			<div class="pane-header">編集</div>
+			<textarea
+				class="content-textarea"
+				value={content}
+				oninput={(e) => onContentChange((e.target as HTMLTextAreaElement).value)}
+				placeholder="Markdownで記述..."
+			></textarea>
 		</div>
-	{:else}
-		<textarea
-			class="content-textarea"
-			value={content}
-			oninput={(e) => onContentChange((e.target as HTMLTextAreaElement).value)}
-			placeholder="Markdownで記述..."
-		></textarea>
-	{/if}
+		<div class="pane preview-pane">
+			<div class="pane-header">プレビュー</div>
+			<div class="preview markdown-body">
+				{@html renderedHtml}
+			</div>
+		</div>
+	</div>
 </div>
 
 <style>
@@ -66,46 +61,49 @@
 		background: transparent;
 	}
 
-	.tabs {
+	.panes {
 		display: flex;
-		gap: 0.25rem;
-		border-bottom: 1px solid #e9ecef;
-		padding-bottom: 0.5rem;
-	}
-
-	.tab {
-		padding: 0.375rem 0.75rem;
-		background: none;
-		border: none;
-		border-radius: 6px;
-		font-size: 0.8125rem;
-		cursor: pointer;
-		color: #6c757d;
-	}
-
-	.tab.active {
+		flex: 1;
+		gap: 1px;
 		background: #e9ecef;
-		color: #212529;
+		border-radius: 6px;
+		overflow: hidden;
+		min-height: 400px;
+	}
+
+	.pane {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		background: white;
+	}
+
+	.pane-header {
+		font-size: 0.75rem;
 		font-weight: 600;
+		color: #6c757d;
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid #e9ecef;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 	}
 
 	.content-textarea {
 		flex: 1;
-		min-height: 400px;
 		border: none;
 		outline: none;
 		resize: none;
 		font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 		font-size: 0.875rem;
 		line-height: 1.7;
-		padding: 0.5rem 0;
+		padding: 0.75rem;
 		background: transparent;
 	}
 
 	.preview {
 		flex: 1;
 		overflow-y: auto;
-		padding: 0.5rem 0;
+		padding: 0.75rem;
 		font-size: 0.9375rem;
 		line-height: 1.8;
 	}
