@@ -32,9 +32,16 @@
 		saveTimer = setTimeout(async () => {
 			if (!memo) return;
 			saving = true;
+			const start = Date.now();
 			await api.memos.update(memo.id, { title: memo.title, content: memo.content });
-			saving = false;
-		}, 500);
+			const elapsed = Date.now() - start;
+			const remaining = 1000 - elapsed;
+			if (remaining > 0) {
+				setTimeout(() => { saving = false; }, remaining);
+			} else {
+				saving = false;
+			}
+		}, 1500);
 	}
 
 	function handleTitleChange(value: string) {
@@ -51,6 +58,7 @@
 
 	async function handleDelete() {
 		if (!memo) return;
+		if (!confirm('このメモを削除しますか？')) return;
 		await api.memos.delete(memo.id);
 		await goto('/');
 	}

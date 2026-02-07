@@ -21,7 +21,7 @@
 				<span class="memo-preview">{truncate(memo.content, 80)}</span>
 				<span class="memo-date">{formatDate(memo.updatedAt)}</span>
 			</a>
-			<button class="delete-btn" onclick={() => onDelete(memo.id)} title="削除">×</button>
+			<button class="delete-btn" onclick={() => { if (confirm('このメモを削除しますか？')) onDelete(memo.id); }} title="削除">×</button>
 		</li>
 	{/each}
 </ul>
