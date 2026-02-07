@@ -34,6 +34,18 @@ sw.addEventListener('activate', (event) => {
 sw.addEventListener('fetch', (event) => {
 	const url = new URL(event.request.url);
 
+	// 自オリジン以外はスキップ
+	if (url.origin !== location.origin) return;
+
+	// Vite開発サーバー関連のリクエストはスキップ（開発時にSWが残っていた場合の防御）
+	if (
+		url.pathname.includes('__vite') ||
+		url.pathname.includes('@vite') ||
+		url.pathname.includes('node_modules/.vite')
+	) {
+		return;
+	}
+
 	// APIリクエストはネットワーク優先
 	if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) {
 		event.respondWith(
