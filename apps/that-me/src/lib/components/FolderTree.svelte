@@ -4,11 +4,27 @@
 	let {
 		folders,
 		selectedFolderId,
-		onSelect
+		onSelect,
+		isCreatingFolder,
+		creatingFolderParentId,
+		onCreateFolder,
+		onCancelCreate,
+		onStartCreateSubfolder,
+		onRenameFolder,
+		onDeleteFolder,
+		onCreateMemoInFolder
 	}: {
 		folders: Folder[];
 		selectedFolderId: number | undefined;
 		onSelect: (id: number | undefined) => void;
+		isCreatingFolder: boolean;
+		creatingFolderParentId: number | undefined;
+		onCreateFolder: (name: string, parentFolderId?: number) => void;
+		onCancelCreate: () => void;
+		onStartCreateSubfolder: (parentFolderId: number) => void;
+		onRenameFolder: (id: number, name: string) => void;
+		onDeleteFolder: (id: number) => void;
+		onCreateMemoInFolder: (folderId: number) => void;
 	} = $props();
 
 	let rootFolders = $derived(folders.filter((f) => !f.parentFolderId));
@@ -16,31 +32,231 @@
 	function getChildren(parentId: number): Folder[] {
 		return folders.filter((f) => f.parentFolderId === parentId);
 	}
+
+	// インライン作成
+	let newFolderName = $state('');
+	let createInputEl = $state<HTMLInputElement | null>(null);
+
+	$effect(() => {
+		if (isCreatingFolder && createInputEl) {
+			createInputEl.focus();
+		}
+	});
+
+	function handleCreateKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter' && newFolderName.trim()) {
+			onCreateFolder(newFolderName.trim(), creatingFolderParentId);
+			newFolderName = '';
+		} else if (e.key === 'Escape') {
+			newFolderName = '';
+			onCancelCreate();
+		}
+	}
+
+	function handleCreateConfirm() {
+		if (newFolderName.trim()) {
+			onCreateFolder(newFolderName.trim(), creatingFolderParentId);
+			newFolderName = '';
+		}
+	}
+
+	function handleCreateCancel() {
+		newFolderName = '';
+		onCancelCreate();
+	}
+
+	// リネーム
+	let renamingFolderId = $state<number | undefined>(undefined);
+	let renamingName = $state('');
+	let renameInputEl = $state<HTMLInputElement | null>(null);
+
+	$effect(() => {
+		if (renamingFolderId !== undefined && renameInputEl) {
+			renameInputEl.focus();
+			renameInputEl.select();
+		}
+	});
+
+	function startRename(folder: Folder) {
+		renamingFolderId = folder.id;
+		renamingName = folder.name;
+		contextMenu = undefined;
+	}
+
+	function handleRenameKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter' && renamingName.trim() && renamingFolderId !== undefined) {
+			onRenameFolder(renamingFolderId, renamingName.trim());
+			renamingFolderId = undefined;
+			renamingName = '';
+		} else if (e.key === 'Escape') {
+			renamingFolderId = undefined;
+			renamingName = '';
+		}
+	}
+
+	function handleRenameConfirm() {
+		if (renamingName.trim() && renamingFolderId !== undefined) {
+			onRenameFolder(renamingFolderId, renamingName.trim());
+			renamingFolderId = undefined;
+			renamingName = '';
+		}
+	}
+
+	function handleRenameCancel() {
+		renamingFolderId = undefined;
+		renamingName = '';
+	}
+
+	// コンテキストメニュー
+	let contextMenu = $state<{ folderId: number; x: number; y: number; isRoot: boolean } | undefined>(undefined);
+
+	function handleContextMenu(e: MouseEvent, folder: Folder) {
+		e.preventDefault();
+		const isRoot = !folder.parentFolderId;
+		contextMenu = { folderId: folder.id, x: e.clientX, y: e.clientY, isRoot };
+	}
+
+	function closeContextMenu() {
+		contextMenu = undefined;
+	}
+
+	function handleContextCreateMemo() {
+		if (contextMenu) {
+			onCreateMemoInFolder(contextMenu.folderId);
+			contextMenu = undefined;
+		}
+	}
+
+	function handleContextCreateSubfolder() {
+		if (contextMenu) {
+			onStartCreateSubfolder(contextMenu.folderId);
+			contextMenu = undefined;
+		}
+	}
+
+	function handleContextRename() {
+		if (contextMenu) {
+			const folder = folders.find((f) => f.id === contextMenu!.folderId);
+			if (folder) startRename(folder);
+		}
+	}
+
+	function handleContextDelete() {
+		if (contextMenu) {
+			onDeleteFolder(contextMenu.folderId);
+			contextMenu = undefined;
+		}
+	}
 </script>
+
+<svelte:window onclick={closeContextMenu} />
 
 <nav class="folder-tree">
 	<button class="folder-item" class:active={!selectedFolderId} onclick={() => onSelect(undefined)}>
 		すべてのメモ
 	</button>
+
+	{#if isCreatingFolder && creatingFolderParentId === undefined}
+		<div class="inline-input">
+			<input
+				bind:this={createInputEl}
+				bind:value={newFolderName}
+				onkeydown={handleCreateKeydown}
+				placeholder="フォルダー名"
+				class="folder-name-input"
+			/>
+			<button class="inline-btn confirm" onclick={handleCreateConfirm} title="作成">&#10003;</button>
+			<button class="inline-btn cancel" onclick={handleCreateCancel} title="キャンセル">&#10005;</button>
+		</div>
+	{/if}
+
 	{#each rootFolders as folder (folder.id)}
-		<button
-			class="folder-item"
-			class:active={selectedFolderId === folder.id}
-			onclick={() => onSelect(folder.id)}
-		>
-			{folder.name}
-		</button>
-		{#each getChildren(folder.id) as child (child.id)}
+		{#if renamingFolderId === folder.id}
+			<div class="inline-input">
+				<input
+					bind:this={renameInputEl}
+					bind:value={renamingName}
+					onkeydown={handleRenameKeydown}
+					class="folder-name-input"
+				/>
+				<button class="inline-btn confirm" onclick={handleRenameConfirm} title="確定">&#10003;</button>
+				<button class="inline-btn cancel" onclick={handleRenameCancel} title="キャンセル">&#10005;</button>
+			</div>
+		{:else}
 			<button
-				class="folder-item nested"
-				class:active={selectedFolderId === child.id}
-				onclick={() => onSelect(child.id)}
+				class="folder-item"
+				class:active={selectedFolderId === folder.id}
+				onclick={() => onSelect(folder.id)}
+				oncontextmenu={(e) => handleContextMenu(e, folder)}
 			>
-				{child.name}
+				{folder.name}
 			</button>
+		{/if}
+
+		{#each getChildren(folder.id) as child (child.id)}
+			{#if renamingFolderId === child.id}
+				<div class="inline-input nested">
+					<input
+						bind:this={renameInputEl}
+						bind:value={renamingName}
+						onkeydown={handleRenameKeydown}
+						class="folder-name-input"
+					/>
+					<button class="inline-btn confirm" onclick={handleRenameConfirm} title="確定">&#10003;</button>
+					<button class="inline-btn cancel" onclick={handleRenameCancel} title="キャンセル">&#10005;</button>
+				</div>
+			{:else}
+				<button
+					class="folder-item nested"
+					class:active={selectedFolderId === child.id}
+					onclick={() => onSelect(child.id)}
+					oncontextmenu={(e) => handleContextMenu(e, child)}
+				>
+					{child.name}
+				</button>
+			{/if}
 		{/each}
+
+		{#if isCreatingFolder && creatingFolderParentId === folder.id}
+			<div class="inline-input nested">
+				<input
+					bind:this={createInputEl}
+					bind:value={newFolderName}
+					onkeydown={handleCreateKeydown}
+					placeholder="サブフォルダー名"
+					class="folder-name-input"
+				/>
+				<button class="inline-btn confirm" onclick={handleCreateConfirm} title="作成">&#10003;</button>
+				<button class="inline-btn cancel" onclick={handleCreateCancel} title="キャンセル">&#10005;</button>
+			</div>
+		{/if}
 	{/each}
 </nav>
+
+{#if contextMenu}
+	<!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+	<div
+		class="context-menu"
+		style="left: {contextMenu.x}px; top: {contextMenu.y}px"
+		onclick={(e) => e.stopPropagation()}
+	>
+		<button class="context-menu-item" onclick={handleContextCreateMemo}>
+			フォルダー内にメモを作成
+		</button>
+		{#if contextMenu.isRoot}
+			<button class="context-menu-item" onclick={handleContextCreateSubfolder}>
+				サブフォルダーを作成
+			</button>
+		{/if}
+		<button class="context-menu-item" onclick={handleContextRename}>
+			名前を変更
+		</button>
+		<div class="context-menu-divider"></div>
+		<button class="context-menu-item danger" onclick={handleContextDelete}>
+			削除
+		</button>
+	</div>
+{/if}
 
 <style>
 	.folder-tree {
@@ -74,5 +290,98 @@
 
 	.folder-item.nested {
 		padding-left: 1.5rem;
+	}
+
+	.inline-input {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		padding: 2px 0.5rem;
+	}
+
+	.inline-input.nested {
+		padding-left: 1.5rem;
+	}
+
+	.folder-name-input {
+		flex: 1;
+		padding: 0.25rem 0.375rem;
+		border: 1px solid #dee2e6;
+		border-radius: 4px;
+		font-size: 0.8125rem;
+		outline: none;
+		min-width: 0;
+	}
+
+	.folder-name-input:focus {
+		border-color: #495057;
+	}
+
+	.inline-btn {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 0.125rem 0.25rem;
+		font-size: 0.75rem;
+		border-radius: 4px;
+		line-height: 1;
+		flex-shrink: 0;
+	}
+
+	.inline-btn.confirm {
+		color: #2b8a3e;
+	}
+
+	.inline-btn.confirm:hover {
+		background: #ebfbee;
+	}
+
+	.inline-btn.cancel {
+		color: #c92a2a;
+	}
+
+	.inline-btn.cancel:hover {
+		background: #fff5f5;
+	}
+
+	.context-menu {
+		position: fixed;
+		background: white;
+		border: 1px solid #dee2e6;
+		border-radius: 8px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		padding: 4px 0;
+		min-width: 180px;
+		z-index: 1000;
+	}
+
+	.context-menu-item {
+		display: block;
+		width: 100%;
+		text-align: left;
+		padding: 0.5rem 0.75rem;
+		background: none;
+		border: none;
+		font-size: 0.8125rem;
+		cursor: pointer;
+		color: #495057;
+	}
+
+	.context-menu-item:hover {
+		background: #f1f3f5;
+	}
+
+	.context-menu-item.danger {
+		color: #c92a2a;
+	}
+
+	.context-menu-item.danger:hover {
+		background: #fff5f5;
+	}
+
+	.context-menu-divider {
+		height: 1px;
+		background: #e9ecef;
+		margin: 4px 0;
 	}
 </style>

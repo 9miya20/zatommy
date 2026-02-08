@@ -13,6 +13,8 @@
 	let loading = $state(true);
 	let totalMemos = $state(0);
 	let page = $state(1);
+	let isCreatingFolder = $state(false);
+	let creatingFolderParentId = $state<number | undefined>(undefined);
 
 	$effect(() => {
 		if (!data.user) {
@@ -68,6 +70,44 @@
 		}, 300);
 	}
 
+	function handleStartCreateFolder(parentFolderId?: number) {
+		creatingFolderParentId = parentFolderId;
+		isCreatingFolder = true;
+	}
+
+	function handleCancelCreateFolder() {
+		isCreatingFolder = false;
+		creatingFolderParentId = undefined;
+	}
+
+	async function handleCreateFolder(name: string, parentFolderId?: number) {
+		await api.folders.create({ name, parentFolderId: parentFolderId ?? null });
+		isCreatingFolder = false;
+		creatingFolderParentId = undefined;
+		await loadData();
+	}
+
+	async function handleRenameFolder(id: number, name: string) {
+		await api.folders.update(id, { name });
+		await loadData();
+	}
+
+	async function handleDeleteFolder(id: number) {
+		if (!confirm('このフォルダーを削除しますか？フォルダー内のメモは削除されませんが、フォルダーの紐付けが解除されます。')) return;
+		await api.folders.delete(id);
+		if (selectedFolderId === id) {
+			selectedFolderId = undefined;
+		}
+		await loadData();
+	}
+
+	async function handleCreateMemoInFolder(folderId: number) {
+		const res = await api.memos.create({ title: '無題のメモ', folderId });
+		if (res.data) {
+			await goto(`/memos/${res.data.id}`);
+		}
+	}
+
 	async function handleLogout() {
 		await api.auth.logout();
 		goto('/auth/login');
@@ -81,7 +121,20 @@
 			<button class="icon-btn" onclick={handleLogout} title="ログアウト">↩</button>
 		</div>
 		<button class="new-memo-btn" onclick={handleCreateMemo}>+ 新規メモ</button>
-		<FolderTree {folders} {selectedFolderId} onSelect={handleSelectFolder} />
+		<button class="new-folder-btn" onclick={() => handleStartCreateFolder()}>+ 新規フォルダー</button>
+		<FolderTree
+			{folders}
+			{selectedFolderId}
+			onSelect={handleSelectFolder}
+			{isCreatingFolder}
+			{creatingFolderParentId}
+			onCreateFolder={handleCreateFolder}
+			onCancelCreate={handleCancelCreateFolder}
+			onStartCreateSubfolder={handleStartCreateFolder}
+			onRenameFolder={handleRenameFolder}
+			onDeleteFolder={handleDeleteFolder}
+			onCreateMemoInFolder={handleCreateMemoInFolder}
+		/>
 	</aside>
 
 	<main class="content">
@@ -159,6 +212,22 @@
 
 	.new-memo-btn:hover {
 		opacity: 0.9;
+	}
+
+	.new-folder-btn {
+		width: 100%;
+		padding: 0.5rem;
+		background: white;
+		color: #495057;
+		border: 1px solid #dee2e6;
+		border-radius: 8px;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition: background 0.15s;
+	}
+
+	.new-folder-btn:hover {
+		background: #f8f9fa;
 	}
 
 	.content {
