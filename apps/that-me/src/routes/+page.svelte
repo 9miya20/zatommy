@@ -158,6 +158,7 @@
 				<div class="folder-header-actions">
 					<button class="folder-header-btn folder-header-btn-primary" onclick={() => handleCreateMemoInFolder(selectedFolder!.id)}>+ 新規メモ</button>
 					<button class="folder-header-btn folder-header-btn-secondary" onclick={() => handleStartCreateFolder(selectedFolder!.id)}>+ 新規フォルダー</button>
+					<button class="folder-header-btn folder-header-btn-danger" onclick={() => handleDeleteFolder(selectedFolder!.id)}>削除</button>
 				</div>
 			</div>
 		{/if}
@@ -325,6 +326,16 @@
 
 	.folder-header-btn-secondary:hover {
 		background: #f8f9fa;
+	}
+
+	.folder-header-btn-danger {
+		background: white;
+		color: #c92a2a;
+		border: 1px solid #dee2e6;
+	}
+
+	.folder-header-btn-danger:hover {
+		background: #fff5f5;
 	}
 
 	.loading,
