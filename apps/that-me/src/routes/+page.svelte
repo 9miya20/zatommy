@@ -15,6 +15,9 @@
 	let page = $state(1);
 	let isCreatingFolder = $state(false);
 	let creatingFolderParentId = $state<number | undefined>(undefined);
+	let selectedFolder = $derived(
+		selectedFolderId !== undefined ? folders.find((f) => f.id === selectedFolderId) : undefined
+	);
 
 	$effect(() => {
 		if (!data.user) {
@@ -42,7 +45,7 @@
 	}
 
 	async function handleCreateMemo() {
-		const res = await api.memos.create({ title: '無題のメモ', folderId: selectedFolderId ?? null });
+		const res = await api.memos.create({ title: '無題のメモ', folderId: null });
 		if (res.data) {
 			await goto(`/memos/${res.data.id}`);
 		}
@@ -148,6 +151,16 @@
 			/>
 			<span class="memo-count">{totalMemos} 件</span>
 		</div>
+
+		{#if selectedFolder}
+			<div class="folder-header">
+				<h3 class="folder-header-name">📁 {selectedFolder.name}</h3>
+				<div class="folder-header-actions">
+					<button class="folder-header-btn folder-header-btn-primary" onclick={() => handleCreateMemoInFolder(selectedFolder!.id)}>+ 新規メモ</button>
+					<button class="folder-header-btn folder-header-btn-secondary" onclick={() => handleStartCreateFolder(selectedFolder!.id)}>+ 新規フォルダー</button>
+				</div>
+			</div>
+		{/if}
 
 		{#if loading}
 			<div class="loading">読み込み中...</div>
@@ -261,6 +274,57 @@
 		color: #6c757d;
 		font-size: 0.875rem;
 		white-space: nowrap;
+	}
+
+	.folder-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75rem 1rem;
+		background: white;
+		border: 1px solid #dee2e6;
+		border-radius: 8px;
+		margin-bottom: 1rem;
+	}
+
+	.folder-header-name {
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: #212529;
+		margin: 0;
+	}
+
+	.folder-header-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.folder-header-btn {
+		padding: 0.375rem 0.75rem;
+		border-radius: 6px;
+		font-size: 0.8125rem;
+		cursor: pointer;
+		transition: opacity 0.15s;
+	}
+
+	.folder-header-btn:hover {
+		opacity: 0.85;
+	}
+
+	.folder-header-btn-primary {
+		background: #212529;
+		color: white;
+		border: none;
+	}
+
+	.folder-header-btn-secondary {
+		background: white;
+		color: #495057;
+		border: 1px solid #dee2e6;
+	}
+
+	.folder-header-btn-secondary:hover {
+		background: #f8f9fa;
 	}
 
 	.loading,
