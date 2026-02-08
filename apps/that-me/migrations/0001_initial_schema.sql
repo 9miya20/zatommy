@@ -53,18 +53,26 @@ CREATE TABLE IF NOT EXISTS shares (
 CREATE INDEX idx_shares_resource ON shares(resource_type, resource_id);
 CREATE INDEX idx_shares_user ON shares(shared_with_user_id);
 
--- 全文検索
+-- 全文検索（FTS5）仮想テーブル
+-- content=memos: データ本体はmemosテーブルを参照し、FTS5は検索インデックスのみ保持（ストレージ節約）
+-- content_rowid=id: memosテーブルのidカラムをFTSのrowidとして使用
 CREATE VIRTUAL TABLE IF NOT EXISTS memos_fts USING fts5(title, content, content=memos, content_rowid=id);
 
 -- FTS同期トリガー
+-- content syncモードではFTS5が自動更新しないため、トリガーで手動同期する
+
+-- INSERT: memosに行追加時、FTSインデックスにも追加
 CREATE TRIGGER memos_ai AFTER INSERT ON memos BEGIN
   INSERT INTO memos_fts(rowid, title, content) VALUES (new.id, new.title, new.content);
 END;
 
+-- DELETE: memosから行削除時、FTSインデックスからも除去
+-- 第1カラムにテーブル名自体を指定し値'delete'を渡すのがFTS5の削除構文
 CREATE TRIGGER memos_ad AFTER DELETE ON memos BEGIN
   INSERT INTO memos_fts(memos_fts, rowid, title, content) VALUES ('delete', old.id, old.title, old.content);
 END;
 
+-- UPDATE: FTS5にはUPDATE操作がないため、旧データ削除→新データ追加の2ステップで更新
 CREATE TRIGGER memos_au AFTER UPDATE ON memos BEGIN
   INSERT INTO memos_fts(memos_fts, rowid, title, content) VALUES ('delete', old.id, old.title, old.content);
   INSERT INTO memos_fts(rowid, title, content) VALUES (new.id, new.title, new.content);
