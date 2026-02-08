@@ -57,29 +57,11 @@ export const memos = sqliteTable(
 	]
 );
 
-export const shares = sqliteTable(
-	'shares',
-	{
-		id: integer('id').primaryKey({ autoIncrement: true }),
-		resourceType: text('resource_type', { enum: ['memo', 'folder'] }).notNull(),
-		resourceId: integer('resource_id').notNull(),
-		sharedWithUserId: integer('shared_with_user_id')
-			.notNull()
-			.references(() => users.id, { onDelete: 'cascade' }),
-		permission: text('permission', { enum: ['read', 'write'] }).notNull().default('read'),
-		createdAt: timestamp()
-	},
-	(table) => [
-		index('idx_shares_resource').on(table.resourceType, table.resourceId),
-		index('idx_shares_user').on(table.sharedWithUserId)
-	]
-);
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
 	folders: many(folders),
 	memos: many(memos),
-	sharedWithMe: many(shares)
 }));
 
 export const foldersRelations = relations(folders, ({ one, many }) => ({
@@ -94,6 +76,3 @@ export const memosRelations = relations(memos, ({ one }) => ({
 	folder: one(folders, { fields: [memos.folderId], references: [folders.id] })
 }));
 
-export const sharesRelations = relations(shares, ({ one }) => ({
-	sharedWith: one(users, { fields: [shares.sharedWithUserId], references: [users.id] })
-}));

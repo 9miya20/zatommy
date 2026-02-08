@@ -39,19 +39,6 @@ CREATE INDEX idx_memos_owner ON memos(owner_id);
 CREATE INDEX idx_memos_folder ON memos(folder_id);
 CREATE INDEX idx_memos_updated ON memos(updated_at);
 
--- 共有設定（将来Phase）
-CREATE TABLE IF NOT EXISTS shares (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  resource_type TEXT NOT NULL CHECK (resource_type IN ('memo', 'folder')),
-  resource_id INTEGER NOT NULL,
-  shared_with_user_id INTEGER NOT NULL,
-  permission TEXT NOT NULL DEFAULT 'read' CHECK (permission IN ('read', 'write')),
-  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
-  FOREIGN KEY (shared_with_user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_shares_resource ON shares(resource_type, resource_id);
-CREATE INDEX idx_shares_user ON shares(shared_with_user_id);
 
 -- 全文検索（FTS5）仮想テーブル
 -- content=memos: データ本体はmemosテーブルを参照し、FTS5は検索インデックスのみ保持（ストレージ節約）
