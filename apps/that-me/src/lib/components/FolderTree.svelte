@@ -12,7 +12,12 @@
 		onStartCreateSubfolder,
 		onRenameFolder,
 		onDeleteFolder,
-		onCreateMemoInFolder
+		onCreateMemoInFolder,
+		draggingItem,
+		onDropOnFolder,
+		onDropOnRoot,
+		onFolderDragStart,
+		onFolderDragEnd
 	}: {
 		folders: Folder[];
 		selectedFolderId: number | undefined;
@@ -25,12 +30,34 @@
 		onRenameFolder: (id: number, name: string) => void;
 		onDeleteFolder: (id: number) => void;
 		onCreateMemoInFolder: (folderId: number) => void;
+		draggingItem: { type: 'memo' | 'folder'; id: number } | null;
+		onDropOnFolder: (targetFolderId: number) => void;
+		onDropOnRoot: () => void;
+		onFolderDragStart: (folderId: number) => void;
+		onFolderDragEnd: () => void;
 	} = $props();
 
 	let rootFolders = $derived(folders.filter((f) => !f.parentFolderId));
 
 	function getChildren(parentId: number): Folder[] {
 		return folders.filter((f) => f.parentFolderId === parentId);
+	}
+
+	// ドラッグ&ドロップ
+	let dropTargetFolderId = $state<number | 'root' | null>(null);
+
+	function isDescendantOf(folderId: number, potentialAncestorId: number): boolean {
+		const folder = folders.find((f) => f.id === folderId);
+		if (!folder || !folder.parentFolderId) return false;
+		if (folder.parentFolderId === potentialAncestorId) return true;
+		return isDescendantOf(folder.parentFolderId, potentialAncestorId);
+	}
+
+	function isValidDropTarget(targetFolderId: number): boolean {
+		if (!draggingItem) return false;
+		if (draggingItem.type === 'memo') return true;
+		if (draggingItem.id === targetFolderId) return false;
+		return !isDescendantOf(targetFolderId, draggingItem.id);
 	}
 
 	// インライン作成
@@ -152,7 +179,24 @@
 <svelte:window onclick={closeContextMenu} />
 
 <nav class="folder-tree">
-	<button class="folder-item" class:active={!selectedFolderId} onclick={() => onSelect(undefined)}>
+	<button
+		class="folder-item"
+		class:active={!selectedFolderId}
+		class:drop-target={dropTargetFolderId === 'root'}
+		onclick={() => onSelect(undefined)}
+		ondragover={(e) => {
+			if (draggingItem) {
+				e.preventDefault();
+				dropTargetFolderId = 'root';
+			}
+		}}
+		ondragleave={() => { dropTargetFolderId = null; }}
+		ondrop={(e) => {
+			e.preventDefault();
+			dropTargetFolderId = null;
+			onDropOnRoot();
+		}}
+	>
 		すべてのメモ
 	</button>
 
@@ -186,8 +230,28 @@
 			<button
 				class="folder-item"
 				class:active={selectedFolderId === folder.id}
+				class:drop-target={dropTargetFolderId === folder.id}
+				class:dragging={draggingItem?.type === 'folder' && draggingItem.id === folder.id}
+				draggable="true"
 				onclick={() => onSelect(folder.id)}
 				oncontextmenu={(e) => handleContextMenu(e, folder)}
+				ondragstart={(e) => {
+					e.dataTransfer?.setData('text/plain', String(folder.id));
+					onFolderDragStart(folder.id);
+				}}
+				ondragend={() => { onFolderDragEnd(); }}
+				ondragover={(e) => {
+					if (draggingItem && isValidDropTarget(folder.id)) {
+						e.preventDefault();
+						dropTargetFolderId = folder.id;
+					}
+				}}
+				ondragleave={() => { dropTargetFolderId = null; }}
+				ondrop={(e) => {
+					e.preventDefault();
+					dropTargetFolderId = null;
+					onDropOnFolder(folder.id);
+				}}
 			>
 				{folder.name}
 			</button>
@@ -209,8 +273,28 @@
 				<button
 					class="folder-item nested"
 					class:active={selectedFolderId === child.id}
+					class:drop-target={dropTargetFolderId === child.id}
+					class:dragging={draggingItem?.type === 'folder' && draggingItem.id === child.id}
+					draggable="true"
 					onclick={() => onSelect(child.id)}
 					oncontextmenu={(e) => handleContextMenu(e, child)}
+					ondragstart={(e) => {
+						e.dataTransfer?.setData('text/plain', String(child.id));
+						onFolderDragStart(child.id);
+					}}
+					ondragend={() => { onFolderDragEnd(); }}
+					ondragover={(e) => {
+						if (draggingItem && isValidDropTarget(child.id)) {
+							e.preventDefault();
+							dropTargetFolderId = child.id;
+						}
+					}}
+					ondragleave={() => { dropTargetFolderId = null; }}
+					ondrop={(e) => {
+						e.preventDefault();
+						dropTargetFolderId = null;
+						onDropOnFolder(child.id);
+					}}
 				>
 					{child.name}
 				</button>
@@ -276,7 +360,7 @@
 		font-size: 0.8125rem;
 		cursor: pointer;
 		color: #495057;
-		transition: background 0.1s;
+		transition: background 0.1s, opacity 0.15s;
 	}
 
 	.folder-item:hover {
@@ -286,6 +370,16 @@
 	.folder-item.active {
 		background: #e9ecef;
 		font-weight: 600;
+	}
+
+	.folder-item.drop-target {
+		background: #d0ebff;
+		outline: 2px solid #339af0;
+		outline-offset: -2px;
+	}
+
+	.folder-item.dragging {
+		opacity: 0.4;
 	}
 
 	.folder-item.nested {

@@ -15,6 +15,7 @@
 	let page = $state(1);
 	let isCreatingFolder = $state(false);
 	let creatingFolderParentId = $state<number | undefined>(undefined);
+	let draggingItem = $state<{ type: 'memo' | 'folder'; id: number } | null>(null);
 	let selectedFolder = $derived(
 		selectedFolderId !== undefined ? folders.find((f) => f.id === selectedFolderId) : undefined
 	);
@@ -111,6 +112,36 @@
 		}
 	}
 
+	function handleDragStart(type: 'memo' | 'folder', id: number) {
+		draggingItem = { type, id };
+	}
+
+	function handleDragEnd() {
+		draggingItem = null;
+	}
+
+	async function handleDropOnFolder(targetFolderId: number) {
+		if (!draggingItem) return;
+		if (draggingItem.type === 'memo') {
+			await api.memos.update(draggingItem.id, { folderId: targetFolderId });
+		} else {
+			await api.folders.update(draggingItem.id, { parentFolderId: targetFolderId });
+		}
+		draggingItem = null;
+		await loadData();
+	}
+
+	async function handleDropOnRoot() {
+		if (!draggingItem) return;
+		if (draggingItem.type === 'memo') {
+			await api.memos.update(draggingItem.id, { folderId: null });
+		} else {
+			await api.folders.update(draggingItem.id, { parentFolderId: null });
+		}
+		draggingItem = null;
+		await loadData();
+	}
+
 	async function handleLogout() {
 		await api.auth.logout();
 		goto('/auth/login');
@@ -137,6 +168,11 @@
 			onRenameFolder={handleRenameFolder}
 			onDeleteFolder={handleDeleteFolder}
 			onCreateMemoInFolder={handleCreateMemoInFolder}
+			{draggingItem}
+			onDropOnFolder={handleDropOnFolder}
+			onDropOnRoot={handleDropOnRoot}
+			onFolderDragStart={(folderId) => handleDragStart('folder', folderId)}
+			onFolderDragEnd={handleDragEnd}
 		/>
 	</aside>
 
@@ -170,7 +206,12 @@
 				{searchQuery ? '検索結果がありません' : 'メモがありません。新規作成してください。'}
 			</div>
 		{:else}
-			<MemoList {memos} onDelete={handleDeleteMemo} />
+			<MemoList
+				{memos}
+				onDelete={handleDeleteMemo}
+				onDragStart={(memoId) => handleDragStart('memo', memoId)}
+				onDragEnd={handleDragEnd}
+			/>
 		{/if}
 	</main>
 </div>

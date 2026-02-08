@@ -1,7 +1,19 @@
 <script lang="ts">
 	import type { Memo } from '$lib/api.js';
 
-	let { memos, onDelete }: { memos: Memo[]; onDelete: (id: number) => void } = $props();
+	let {
+		memos,
+		onDelete,
+		onDragStart,
+		onDragEnd
+	}: {
+		memos: Memo[];
+		onDelete: (id: number) => void;
+		onDragStart: (memoId: number) => void;
+		onDragEnd: () => void;
+	} = $props();
+
+	let draggingMemoId = $state<number | null>(null);
 
 	function formatDate(iso: string): string {
 		const d = new Date(iso);
@@ -15,8 +27,21 @@
 
 <ul class="memo-list">
 	{#each memos as memo (memo.id)}
-		<li class="memo-item">
-			<a href="/memos/{memo.id}" class="memo-link">
+		<li
+			class="memo-item"
+			class:dragging={draggingMemoId === memo.id}
+		>
+			<a href="/memos/{memo.id}" class="memo-link" draggable="true"
+				ondragstart={(e) => {
+					e.dataTransfer?.setData('text/plain', String(memo.id));
+					draggingMemoId = memo.id;
+					onDragStart(memo.id);
+				}}
+				ondragend={() => {
+					draggingMemoId = null;
+					onDragEnd();
+				}}
+			>
 				<span class="memo-title">{memo.title || '無題のメモ'}</span>
 				<span class="memo-preview">{truncate(memo.content, 80)}</span>
 				<span class="memo-date">{formatDate(memo.updatedAt)}</span>
@@ -40,7 +65,11 @@
 		background: white;
 		border-radius: 8px;
 		border: 1px solid #e9ecef;
-		transition: box-shadow 0.15s;
+		transition: box-shadow 0.15s, opacity 0.15s;
+	}
+
+	.memo-item.dragging {
+		opacity: 0.4;
 	}
 
 	.memo-item:hover {
@@ -55,6 +84,7 @@
 		text-decoration: none;
 		color: inherit;
 		gap: 0.25rem;
+		cursor: grab;
 	}
 
 	.memo-title {
