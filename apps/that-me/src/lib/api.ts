@@ -41,17 +41,6 @@ export interface User {
 }
 
 export const api = {
-	auth: {
-		login(email: string) {
-			return request<never>('/auth/login', {
-				method: 'POST',
-				body: JSON.stringify({ email })
-			});
-		},
-		logout() {
-			return request<never>('/auth/login', { method: 'DELETE' });
-		}
-	},
 	memos: {
 		list(page = 1, limit = 20, folderId?: number) {
 			const params = new URLSearchParams({ page: String(page), limit: String(limit) });

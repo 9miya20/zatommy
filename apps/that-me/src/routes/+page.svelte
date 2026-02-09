@@ -22,7 +22,7 @@
 
 	$effect(() => {
 		if (!data.user) {
-			goto('/auth/login');
+			window.location.href = `${data.authAppUrl}/login?redirect_uri=${encodeURIComponent(window.location.href)}`;
 			return;
 		}
 		loadData();
@@ -142,9 +142,8 @@
 		await loadData();
 	}
 
-	async function handleLogout() {
-		await api.auth.logout();
-		goto('/auth/login');
+	function handleLogout() {
+		window.location.href = `${data.authAppUrl}/logout?return_to=${encodeURIComponent(window.location.origin)}`;
 	}
 </script>
 

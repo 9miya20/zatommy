@@ -1,0 +1,19 @@
+{
+	"name": "@zatommy/auth-utils",
+	"version": "0.0.1",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"jose": "^6.0.0"
+	},
+	"devDependencies": {
+		"typescript": "^5.9.3",
+		"vitest": "^3.0.0"
+	}
+}

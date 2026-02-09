@@ -1,9 +1,5 @@
 import { z } from 'zod';
 
-export const loginSchema = z.object({
-	email: z.string().email()
-});
-
 export const createMemoSchema = z.object({
 	title: z.string().max(500).default(''),
 	content: z.string().default(''),

@@ -4,10 +4,17 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/that-me/package.json apps/that-me/
+COPY packages/auth-utils/package.json packages/auth-utils/
 
-COPY . .
+RUN pnpm install --frozen-lockfile --filter that-me...
+
+COPY packages/auth-utils/ packages/auth-utils/
+COPY apps/that-me/ apps/that-me/
+
+WORKDIR /app/apps/that-me
+
 RUN pnpm prepare
 
 EXPOSE 38101

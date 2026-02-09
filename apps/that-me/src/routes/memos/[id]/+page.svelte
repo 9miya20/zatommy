@@ -13,7 +13,7 @@
 
 	$effect(() => {
 		if (!data.user) {
-			goto('/auth/login');
+			window.location.href = `${data.authAppUrl}/login?redirect_uri=${encodeURIComponent(window.location.href)}`;
 			return;
 		}
 		loadMemo();

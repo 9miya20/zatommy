@@ -17,9 +17,13 @@ export const users = sqliteTable(
 		id: integer('id').primaryKey({ autoIncrement: true }),
 		email: text('email').unique().notNull(),
 		name: text('name').notNull().default(''),
+		authUserId: text('auth_user_id').unique(),
 		createdAt: timestamp()
 	},
-	(table) => [index('idx_users_email').on(table.email)]
+	(table) => [
+		index('idx_users_email').on(table.email),
+		index('idx_users_auth_user_id').on(table.authUserId)
+	]
 );
 
 export const folders = sqliteTable(

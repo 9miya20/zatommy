@@ -40,7 +40,7 @@ Browser → Service Worker (アセットキャッシュ)
 
 ### 認証
 
-`AuthProvider`インターフェース (`src/lib/server/auth.ts`) で抽象化。`AUTH_PROVIDER` 環境変数で実装を切り替え。現在は `dummy` のみ (cookie `session=dummy-{email}`)。将来的に `auth-external.ts` で外部認証サーバーに差し替え予定。
+Auth0 ベースの認証。`apps/auth` が認証フロー（ログイン/ログアウト/トークンリフレッシュ）を担当し、`that-me` は `access_token` Cookie の検証のみ行う。`AuthProvider` インターフェース (`src/lib/server/auth.ts`) は `getCurrentUser` のみ。ログイン/ログアウトは `apps/auth` への外部リダイレクト (`AUTH_APP_URL`)。
 
 ### API設計パターン
 

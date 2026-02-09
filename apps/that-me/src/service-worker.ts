@@ -47,7 +47,7 @@ sw.addEventListener('fetch', (event) => {
 	}
 
 	// APIリクエストはネットワーク優先
-	if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/')) {
+	if (url.pathname.startsWith('/api/')) {
 		event.respondWith(
 			fetch(event.request).catch(() => {
 				return new Response(JSON.stringify({ error: 'オフラインです' }), {

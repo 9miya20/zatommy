@@ -1,0 +1,17 @@
+{
+	"private": true,
+	"scripts": {
+		"dev:that-me": "pnpm --filter that-me dev",
+		"dev:auth": "pnpm --filter auth dev",
+		"build": "pnpm -r build",
+		"test": "pnpm -r test",
+		"check": "pnpm -r check"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild",
+			"workerd",
+			"sharp"
+		]
+	}
+}
