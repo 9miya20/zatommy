@@ -1,0 +1,3 @@
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_AUDIENCE=https://api.zatommy.example.com
+AUTH_APP_URL=http://localhost:38200

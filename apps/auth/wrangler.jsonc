@@ -9,12 +9,5 @@
 			"binding": "KV",
 			"id": "LOCAL_PLACEHOLDER"
 		}
-	],
-	"vars": {
-		"AUTH0_DOMAIN": "your-tenant.auth0.com",
-		"AUTH0_CLIENT_ID": "xxx",
-		"AUTH0_AUDIENCE": "https://api.zatommy.example.com",
-		"ALLOWED_REDIRECT_URIS": "http://localhost:38100"
-	}
-	// AUTH0_CLIENT_SECRET は wrangler secret put で設定
+	]
 }
