@@ -17,6 +17,6 @@ WORKDIR /app/apps/that-me
 
 RUN pnpm prepare
 
-EXPOSE 38101
+EXPOSE 38100
 
 CMD ["sh", "-c", "pnpm db:migrate:local && pnpm dev --host 0.0.0.0"]

@@ -10,14 +10,14 @@ services:
       - AUTH0_CLIENT_ID=xxx
       - AUTH0_CLIENT_SECRET=xxx
       - AUTH0_AUDIENCE=https://api.zatommy.example.com
-      - ALLOWED_REDIRECT_URIS=http://localhost:38101
+      - ALLOWED_REDIRECT_URIS=http://localhost:38100
 
   that-me:
     build:
       context: .
       dockerfile: apps/that-me/Dockerfile
     ports:
-      - "38101:38101"
+      - "38100:38100"
     volumes:
       - ./apps/that-me/src:/app/apps/that-me/src
       - ./apps/that-me/static:/app/apps/that-me/static
