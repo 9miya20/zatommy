@@ -31,6 +31,14 @@ app.route('/callback', callback);
 app.route('/token', token);
 app.route('/logout', logout);
 
+// 認証設定を公開（消費者アプリが JWT 検証に使う）
+app.get('/auth/config', (c) => {
+	return c.json({
+		domain: c.env.AUTH0_DOMAIN,
+		audience: c.env.AUTH0_AUDIENCE
+	});
+});
+
 // ヘルスチェック
 app.get('/health', (c) => c.json({ status: 'ok' }));
 

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../bindings.js';
 import { generateCodeVerifier, generateCodeChallenge, generateState } from '../lib/pkce.js';
+import { normalizeUri } from '../lib/url.js';
 
 const login = new Hono<{ Bindings: Env }>();
 
@@ -9,7 +10,7 @@ login.get('/', (c) => {
 	const redirectUri = c.req.query('redirect_uri') ?? '';
 	const allowedUris = c.env.ALLOWED_REDIRECT_URIS.split(',').map((u) => u.trim());
 
-	if (redirectUri && !allowedUris.includes(redirectUri)) {
+	if (redirectUri && !allowedUris.map(normalizeUri).includes(normalizeUri(redirectUri))) {
 		return c.text('不正な redirect_uri です', 400);
 	}
 
@@ -77,7 +78,7 @@ login.get('/:provider', async (c) => {
 	const redirectUri = c.req.query('redirect_uri') ?? '';
 	const allowedUris = c.env.ALLOWED_REDIRECT_URIS.split(',').map((u) => u.trim());
 
-	if (redirectUri && !allowedUris.includes(redirectUri)) {
+	if (redirectUri && !allowedUris.map(normalizeUri).includes(normalizeUri(redirectUri))) {
 		return c.text('不正な redirect_uri です', 400);
 	}
 

@@ -16,7 +16,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	if (accessToken && isTokenExpiringSoon(accessToken, 60)) {
 		try {
-			const authAppUrl = platform.env.AUTH_APP_URL;
+			const authAppUrl = platform.env.AUTH_APP_INTERNAL_URL ?? platform.env.AUTH_APP_URL;
 			const refreshResponse = await fetch(`${authAppUrl}/token/refresh`, {
 				method: 'POST',
 				headers: {

@@ -13,9 +13,8 @@ declare global {
 			env: {
 				DB: D1Database;
 				CACHE: KVNamespace;
-				AUTH0_DOMAIN: string;
-				AUTH0_AUDIENCE: string;
 				AUTH_APP_URL: string;
+				AUTH_APP_INTERNAL_URL?: string;
 			};
 			context: ExecutionContext;
 		}

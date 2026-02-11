@@ -7,6 +7,7 @@ services:
       - "38200:38200"
     volumes:
       - ./apps/auth/.dev.vars:/app/apps/auth/.dev.vars:ro
+      - ./apps/auth/src:/app/apps/auth/src
 
   that-me:
     build:

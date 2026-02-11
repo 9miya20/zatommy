@@ -1,32 +1,17 @@
 import { eq } from 'drizzle-orm';
-import {
-	createAuth0JwksClient,
-	verifyAccessToken,
-	extractCookieToken
-} from '@zatommy/auth-utils';
+import { createTokenVerifier } from '@zatommy/auth-utils';
 import type { AuthProvider } from './auth.js';
 import { users } from './schema.js';
 import { getDb } from './db.js';
 
-export function createAuth0Provider(env: {
-	AUTH0_DOMAIN: string;
-	AUTH0_AUDIENCE: string;
-}): AuthProvider {
-	const jwks = createAuth0JwksClient(env.AUTH0_DOMAIN);
-	const issuer = `https://${env.AUTH0_DOMAIN}/`;
-	const audience = env.AUTH0_AUDIENCE;
+export function createRemoteAuthProvider(authAppUrl: string): AuthProvider {
+	const verifier = createTokenVerifier(authAppUrl);
 
 	return {
 		async getCurrentUser(request, platform) {
-			const token = extractCookieToken(request, 'access_token');
-			if (!token) return null;
-
 			try {
-				const authUser = await verifyAccessToken(token, {
-					jwks,
-					audience,
-					issuer
-				});
+				const authUser = await verifier.verify(request);
+				if (!authUser) return null;
 
 				// Auth0 sub → ローカルユーザーにマッピング（upsert）
 				const db = getDb(platform);
