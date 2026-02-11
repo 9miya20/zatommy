@@ -143,7 +143,16 @@
 	}
 
 	function handleLogout() {
-		window.location.href = `${data.authAppUrl}/logout?return_to=${encodeURIComponent(window.location.origin)}`;
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = `${data.authAppUrl}/logout`;
+		const input = document.createElement('input');
+		input.type = 'hidden';
+		input.name = 'return_to';
+		input.value = window.location.origin;
+		form.appendChild(input);
+		document.body.appendChild(form);
+		form.submit();
 	}
 </script>
 

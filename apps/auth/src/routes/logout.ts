@@ -5,9 +5,10 @@ import { normalizeUri } from '../lib/url.js';
 
 const logout = new Hono<{ Bindings: Env }>();
 
-// GET /logout — cookie 削除 → Auth0 ログアウト
-logout.get('/', (c) => {
-	const returnTo = c.req.query('return_to') ?? '';
+// POST /logout — cookie 削除 → Auth0 ログアウト
+logout.post('/', async (c) => {
+	const body = await c.req.parseBody();
+	const returnTo = (typeof body['return_to'] === 'string' ? body['return_to'] : '') ?? '';
 	const allowedUris = c.env.ALLOWED_REDIRECT_URIS.split(',').map((u) => u.trim());
 
 	if (returnTo && !allowedUris.map(normalizeUri).includes(normalizeUri(returnTo))) {
